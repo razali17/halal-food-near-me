@@ -12,64 +12,87 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const DEFAULT_IMAGE_URL =
     process.env.DEFAULT_IMAGE_URL || "/images/default-restaurant.jpg";
 
-// Allow multiple frontend URLs
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://halal-food-frontend-a7c466eaac27.herokuapp.com",
-    "https://halal-food-near-me.vercel.app",
-    "https://halalfoodnearme.org",
-    "https://www.halalfoodnearme.org",
-];
-
-// CORS configuration
-app.use(
-    cors({
-        origin: function (origin, callback) {
-            // Allow requests with no origin (like mobile apps or curl requests)
-            if (!origin) return callback(null, true);
-
-            if (allowedOrigins.indexOf(origin) === -1) {
-                const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-                console.log(msg); // Add logging for debugging
-                return callback(new Error(msg), false);
-            }
-            return callback(null, true);
-        },
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-        credentials: true,
-        maxAge: 86400, // Cache preflight request for 24 hours
-    })
-);
-
-// Add Content-Security-Policy header
+// CORS headers must be set before any routes or middleware
 app.use((req, res, next) => {
     res.setHeader(
-        "Content-Security-Policy",
-        "default-src 'self'; img-src 'self' https://lh3.googleusercontent.com data:; style-src 'self' 'unsafe-inline';"
+        "Access-Control-Allow-Origin",
+        "https://www.halalfoodnearme.org"
     );
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, OPTIONS"
+    );
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+
+    // Handle preflight
+    if (req.method === "OPTIONS") {
+        return res.status(200).end();
+    }
     next();
 });
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing middleware with limits
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Serve images from a public directory
 app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 // Connect to MongoDB
 mongoose
-    .connect(MONGODB_URI)
+    .connect(MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+    })
     .then(() => {
         console.log("Connected to MongoDB");
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
         });
     })
-    .catch((error) => {
-        console.error("MongoDB connection error:", error);
+    .catch((err) => {
+        console.error("MongoDB connection error:", err);
     });
+
+// Handle MongoDB connection errors
+mongoose.connection.on("error", (err) => {
+    console.error("MongoDB connection error:", err);
+});
+
+// Handle process errors
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught Exception:", err);
+    // Attempt graceful shutdown
+    shutdown();
+});
+
+process.on("unhandledRejection", (err) => {
+    console.error("Unhandled Rejection:", err);
+    // Attempt graceful shutdown
+    shutdown();
+});
+
+// Graceful shutdown function
+function shutdown() {
+    console.log("Attempting graceful shutdown...");
+    mongoose.connection
+        .close()
+        .then(() => {
+            console.log("MongoDB connection closed.");
+            process.exit(1);
+        })
+        .catch((err) => {
+            console.error("Error during shutdown:", err);
+            process.exit(1);
+        });
+}
 
 // Routes
 
