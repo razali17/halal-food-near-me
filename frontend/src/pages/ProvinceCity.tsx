@@ -6,6 +6,7 @@ import ListingCard from "../components/ListingCard";
 import FilterBar from "../components/FilterBar";
 import { provinces } from "../data/provinces";
 import { Restaurant } from "../types";
+import config from "../config";
 
 const ProvinceCity: React.FC = () => {
     const { provinceSlug, citySlug } = useParams<{
@@ -34,7 +35,7 @@ const ProvinceCity: React.FC = () => {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `http://localhost:5001/api/restaurants/location?city=${cityNameFromSlug}&state=${province.name}`
+                    `${config.apiUrl}/api/restaurants/location?city=${cityNameFromSlug}&state=${province.name}`
                 );
                 if (!response.ok) {
                     throw new Error("Failed to fetch restaurants");

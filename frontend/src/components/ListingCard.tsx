@@ -23,10 +23,6 @@ const ListingCard: React.FC<ListingCardProps> = ({ restaurant }) => {
     // Get the main image to display
     const mainImage = restaurant.photo || defaultImage;
 
-    // Debug log
-    console.log("Restaurant data:", restaurant);
-    console.log("Selected image URL:", mainImage);
-
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300 w-full">
             <div className="flex flex-col md:flex-row">

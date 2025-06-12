@@ -9,13 +9,36 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const MONGODB_URI = process.env.MONGODB_URI;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const DEFAULT_IMAGE_URL =
+    process.env.DEFAULT_IMAGE_URL || "/images/default-restaurant.jpg";
 
-// Middleware
+// Allow multiple frontend URLs
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://halal-food-frontend-a7c466eaac27.herokuapp.com",
+    "https://halal-food-near-me.vercel.app",
+    "https://halalfoodnearme.org",
+    "https://www.halalfoodnearme.org",
+];
+
+// CORS configuration
 app.use(
     cors({
-        origin: [FRONTEND_URL],
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        allowedHeaders: ["Content-Type"],
+        origin: function (origin, callback) {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            if (allowedOrigins.indexOf(origin) === -1) {
+                const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+                console.log(msg); // Add logging for debugging
+                return callback(new Error(msg), false);
+            }
+            return callback(null, true);
+        },
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+        maxAge: 86400, // Cache preflight request for 24 hours
     })
 );
 
@@ -28,7 +51,9 @@ app.use((req, res, next) => {
     next();
 });
 
+// Body parsing middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve images from a public directory
 app.use("/images", express.static(path.join(__dirname, "public/images")));
@@ -47,6 +72,11 @@ mongoose
     });
 
 // Routes
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", message: "Server is running" });
+});
 
 // Get all restaurants
 app.get("/api/restaurants", async (req, res) => {
@@ -90,7 +120,13 @@ app.get("/api/cities/:state", async (req, res) => {
         });
         res.json(cities.sort());
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error fetching cities:", error); // Error log
+        res.status(500).json({
+            message: "Error fetching cities",
+            error: error.message,
+            state: req.params.state,
+            country: req.query.country,
+        });
     }
 });
 
@@ -183,11 +219,6 @@ app.get("/api/restaurants/location", async (req, res) => {
             delete rest._id;
             delete rest.__v;
 
-            // Log original URLs
-            console.log("Original photo URL:", rest.photo);
-            console.log("Original street_view URL:", rest.street_view);
-            console.log("Original logo URL:", rest.logo);
-
             // Handle photo URLs
             if (rest.photo) {
                 if (rest.photo.includes("AF1QipP")) {
@@ -200,9 +231,8 @@ app.get("/api/restaurants/location", async (req, res) => {
                     // Use street view if it's in AF1QipP format
                     rest.photo = rest.street_view;
                 } else {
-                    // Use default for any other format
-                    rest.photo =
-                        "http://localhost:5001/images/default-restaurant.jpg";
+                    // Use default image URL from environment variable
+                    rest.photo = DEFAULT_IMAGE_URL;
                 }
             } else if (
                 rest.street_view &&
@@ -212,8 +242,7 @@ app.get("/api/restaurants/location", async (req, res) => {
                 rest.photo = rest.street_view;
             } else {
                 // Use default if no valid photos available
-                rest.photo =
-                    "http://localhost:5001/images/default-restaurant.jpg";
+                rest.photo = DEFAULT_IMAGE_URL;
             }
 
             // Transform logo URLs to higher resolution
@@ -224,10 +253,6 @@ app.get("/api/restaurants/location", async (req, res) => {
                     "=s200-c"
                 );
             }
-
-            // Log transformed URLs
-            console.log("Transformed photo URL:", rest.photo);
-            console.log("Transformed logo URL:", rest.logo);
 
             return rest;
         });

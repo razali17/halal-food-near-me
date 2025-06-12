@@ -26,6 +26,7 @@ const restaurantSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
+            default: "",
         },
         postal_code: String,
         country: {

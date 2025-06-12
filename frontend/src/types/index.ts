@@ -25,6 +25,7 @@ export interface Restaurant {
         coordinates: number[];
     };
     cuisine?: string;
+    cuisineType: string[];
     createdAt?: string;
     updatedAt?: string;
 }
