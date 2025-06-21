@@ -141,43 +141,54 @@ const StateOrProvincePage: React.FC = () => {
     };
 
     if (loading) {
-        return <FoodSpinner message="Loading restaurants..." />;
+        return (
+            <div className="pt-20">
+                <FoodSpinner message="Loading..." />
+            </div>
+        );
     }
 
     if (error) {
         return (
-            <div className="container mx-auto px-4 py-12 text-center">
-                <p className="text-red-600">{error}</p>
+            <div className="container mx-auto px-4 py-12 text-center pt-28">
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                    onClick={() => {
+                        setError(null);
+                        setCurrentPage(1);
+                    }}
+                    className="px-4 py-2 bg-primary text-white rounded-full hover:bg-primary-focus"
+                >
+                    Try Again
+                </button>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="bg-white border-b">
-                <div className="container mx-auto px-4 py-8">
-                    <Breadcrumbs
-                        items={[
-                            { label: "Home", href: "/" },
-                            {
-                                label:
-                                    safeCountry.charAt(0).toUpperCase() +
-                                    safeCountry.slice(1),
-                                href: `/${safeCountry}`,
-                            },
-                            {
-                                label: stateNameFromSlug,
-                                href: `/${safeCountry}/${safeState}`,
-                            },
-                        ]}
-                    />
+        <div className="bg-gray-50 min-h-screen pt-20">
+            <div className="container mx-auto px-4 py-8">
+                <Breadcrumbs
+                    items={[
+                        { label: "Home", href: "/" },
+                        {
+                            label:
+                                safeCountry.charAt(0).toUpperCase() +
+                                safeCountry.slice(1),
+                            href: `/${safeCountry}`,
+                        },
+                        {
+                            label: stateNameFromSlug,
+                            href: `/${safeCountry}/${safeState}`,
+                        },
+                    ]}
+                />
 
-                    <div className="mt-6 flex items-center gap-4">
-                        <MapPin className="h-8 w-8 text-primary" />
-                        <h1 className="text-4xl font-bold text-gray-900">
-                            Halal Restaurants in {stateNameFromSlug}
-                        </h1>
-                    </div>
+                <div className="mt-6 flex items-center gap-4">
+                    <MapPin className="h-8 w-8 text-primary" />
+                    <h1 className="text-4xl font-bold text-gray-900">
+                        Halal Restaurants in {stateNameFromSlug}
+                    </h1>
                 </div>
             </div>
 

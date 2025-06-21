@@ -33,8 +33,8 @@ const Canada: React.FC = () => {
                         <p className="text-lg md:text-xl text-gray-100 mb-8">
                             Discover authentic halal restaurants across Canada's
                             provinces. From Toronto's diverse food scene to
-                            Vancouver's fusion cuisine, find certified halal
-                            restaurants that cater to your dietary needs.
+                            Vancouver's fusion cuisine, find halal restaurants
+                            that cater to your dietary needs.
                         </p>
 
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -87,7 +87,7 @@ const Canada: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                         <div className="bg-white p-6 rounded-lg shadow-md">
                             <h3 className="text-xl font-bold text-gray-800 mb-4">
-                                Certified Quality
+                                Quality
                             </h3>
                             <p className="text-gray-600">
                                 Many Canadian restaurants follow strict halal

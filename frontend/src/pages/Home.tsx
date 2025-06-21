@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { UtensilsCrossed, ChevronDown, ChevronUp } from "lucide-react";
+import {
+    UtensilsCrossed,
+    ChevronDown,
+    ChevronUp,
+    MapPin,
+    Search,
+} from "lucide-react";
 import CuisineSection from "../components/CuisineSection";
 import StateLinks from "../components/StateLinks";
 import { cuisines } from "../data/cuisines";
@@ -70,49 +76,83 @@ const Home: React.FC = () => {
         );
     };
 
+    const countries = [
+        {
+            name: "USA",
+            link: "/usa",
+            colors: "text-blue-600 border-blue-600 hover:bg-blue-50",
+        },
+        {
+            name: "Canada",
+            link: "/canada",
+            colors: "text-red-600 border-red-600 hover:bg-red-50",
+        },
+        {
+            name: "United Kingdom",
+            link: "/uk",
+            colors: "text-green-600 border-green-600 hover:bg-green-50",
+        },
+    ];
+
+    const features = [
+        {
+            icon: <Search className="h-12 w-12 text-emerald-600 mb-4" />,
+            title: "Find Halal Food Near Me",
+            description:
+                "Easily search our extensive directory to find halal restaurants in your city. Your next great meal is just a click away.",
+        },
+        {
+            icon: (
+                <UtensilsCrossed className="h-12 w-12 text-emerald-600 mb-4" />
+            ),
+            title: "Explore Diverse Cuisines",
+            description:
+                "Craving something specific? Find halal Chinese food, authentic halal Mexican food, shawarma, and more. Our listings cover a world of flavors.",
+        },
+        {
+            icon: <MapPin className="h-12 w-12 text-emerald-600 mb-4" />,
+            title: "Browse by Location",
+            description:
+                "Whether you're in Los Angeles or London, our directory helps you explore the best halal food by country, state, or city.",
+        },
+    ];
+
     return (
-        <div>
-            <section className="relative bg-gradient-to-r from-emerald-700 to-emerald-900 text-white py-20 md:py-28">
-                <div className="absolute inset-0 bg-black opacity-50"></div>
-                <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                        backgroundImage:
-                            "url(https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2)",
-                        mixBlendMode: "overlay",
-                    }}
-                ></div>
-
+        <div className="bg-gray-50">
+            {/* Hero Section */}
+            <section className="relative bg-gradient-to-r from-emerald-700 to-emerald-900 text-white text-center pt-32 pb-24 md:pt-40 md:pb-32">
+                <div className="absolute inset-0 bg-black opacity-40"></div>
                 <div className="container mx-auto px-4 relative z-10">
-                    <div className="max-w-3xl mx-auto text-center">
-                        <div className="inline-flex items-center justify-center p-3 bg-emerald-500 bg-opacity-80 rounded-full mb-6">
-                            <UtensilsCrossed className="h-8 w-8" />
-                        </div>
-
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                            Find Halal Food Near You
+                    <div className="max-w-4xl mx-auto">
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6">
+                            Find the Best Halal Food Near You
                         </h1>
-
-                        <p className="text-lg md:text-xl text-gray-100 mb-8">
-                            Discover the best halal restaurants across the
-                            United States, United Kingdom, and Canada. From
-                            halal Mexican to Chinese, Indian, and many more
-                            cuisines - find your perfect halal dining
-                            experience. Easily see which restaurants are 100%
-                            halal, alcohol-free, offer prayer spaces, and more
-                            essential details for Muslim diners.
+                        <p className="text-lg md:text-xl lg:text-2xl text-gray-200 max-w-4xl mx-auto mb-8 leading-relaxed">
+                            Your ultimate directory for halal restaurants, from
+                            authentic shawarma to halal Chinese food, Mexican
+                            cuisine, and beyond. Discover your next favorite
+                            meal with confidence.
+                        </p>
+                        <p className="text-base md:text-lg text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+                            Whether you're searching for "halal food near me" or
+                            exploring new cuisines, our comprehensive directory
+                            connects you with halal restaurants across the USA,
+                            Canada, and the United Kingdom. From traditional
+                            favorites to modern fusion dishes, find restaurants
+                            that respect Islamic dietary guidelines while
+                            delivering exceptional flavors.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
+                        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
                             <a
-                                href="#countries"
-                                className="bg-white text-emerald-700 hover:bg-gray-100 py-3 px-6 rounded-full font-medium shadow-md transition duration-300"
+                                href="#states"
+                                className="bg-white text-emerald-700 hover:bg-gray-100 py-4 px-8 rounded-full font-semibold text-lg shadow-lg transform hover:scale-105 transition-all duration-300"
                             >
-                                Browse by Country
+                                Start Your Search
                             </a>
                             <a
                                 href="#explore"
-                                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-emerald-700 py-3 px-6 rounded-full font-medium transition duration-300"
+                                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-emerald-700 py-4 px-8 rounded-full font-semibold text-lg transition-all duration-300"
                             >
                                 Explore Cuisines
                             </a>
@@ -121,51 +161,48 @@ const Home: React.FC = () => {
                 </div>
             </section>
 
-            <section id="countries" className="bg-white py-16">
+            {/* Features Section */}
+            <section className="py-16">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                            Find Halal Food by Country
-                        </h2>
-                        <p className="text-gray-600 max-w-3xl mx-auto">
-                            Explore halal dining options across North America
-                            and the United Kingdom.
-                        </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        {features.map((feature, index) => (
+                            <div
+                                key={index}
+                                className="text-center p-6 flex flex-col h-full items-center"
+                            >
+                                {feature.icon}
+                                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                                    {feature.title}
+                                </h3>
+                                <p className="text-gray-600">
+                                    {feature.description}
+                                </p>
+                            </div>
+                        ))}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                        <Link
-                            to="/usa"
-                            className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 text-center group"
-                        >
-                            <h3 className="text-2xl font-bold text-emerald-800 mb-2 group-hover:text-emerald-600">
-                                United States
-                            </h3>
-                            <p className="text-gray-600">
-                                Browse halal restaurants across all US states
-                            </p>
-                        </Link>
-                        <Link
-                            to="/uk"
-                            className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 text-center group"
-                        >
-                            <h3 className="text-2xl font-bold text-emerald-800 mb-2 group-hover:text-emerald-600">
-                                United Kingdom
-                            </h3>
-                            <p className="text-gray-600">
-                                Discover halal options throughout the UK
-                            </p>
-                        </Link>
-                        <Link
-                            to="/canada"
-                            className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 text-center group"
-                        >
-                            <h3 className="text-2xl font-bold text-emerald-800 mb-2 group-hover:text-emerald-600">
-                                Canada
-                            </h3>
-                            <p className="text-gray-600">
-                                Find halal restaurants across Canadian provinces
-                            </p>
-                        </Link>
+                </div>
+            </section>
+
+            {/* Call to Action - Browse by Country */}
+            <section className="bg-gray-50 py-20">
+                <div className="container mx-auto px-4 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                        Start Your Search
+                    </h2>
+                    <p className="text-gray-600 mb-10 max-w-2xl mx-auto">
+                        Where can you find halal food near you? Begin by
+                        selecting a country below.
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-6">
+                        {countries.map((country) => (
+                            <Link
+                                key={country.name}
+                                to={country.link}
+                                className={`block w-full md:w-auto text-center px-12 py-6 rounded-lg bg-white font-semibold text-2xl shadow-lg transform hover:scale-105 transition-all duration-300 border-2 ${country.colors}`}
+                            >
+                                {country.name}
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </section>

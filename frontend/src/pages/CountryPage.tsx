@@ -85,9 +85,11 @@ const CountryPage: React.FC = () => {
 
     if (loading) {
         return (
-            <FoodSpinner
-                message={isUk ? "Loading cities..." : "Loading regions..."}
-            />
+            <div className="pt-20">
+                <FoodSpinner
+                    message={isUk ? "Loading cities..." : "Loading regions..."}
+                />
+            </div>
         );
     }
 
@@ -98,7 +100,7 @@ const CountryPage: React.FC = () => {
     return (
         <div>
             <section
-                className={`relative bg-gradient-to-r ${styles.gradient} text-white py-20 md:py-28`}
+                className={`relative bg-gradient-to-r ${styles.gradient} text-white pt-32 pb-20 md:pt-40 md:pb-28`}
             >
                 <div className="absolute inset-0 bg-black opacity-50"></div>
                 <div
@@ -124,8 +126,8 @@ const CountryPage: React.FC = () => {
 
                         <p className="text-lg md:text-xl text-gray-100 mb-8">
                             Discover authentic halal restaurants across{" "}
-                            {countryTitle}'s regions. Find certified halal
-                            restaurants that cater to your dietary needs.
+                            {countryTitle}'s regions. Find halal restaurants
+                            that cater to your dietary needs.
                         </p>
 
                         <a

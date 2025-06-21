@@ -179,19 +179,19 @@ app.get("/:country/:state?/:city?", async (req, res, next) => {
         }
 
         // Dynamic SEO values based on URL
-        let title = "Halal Food Near Me - Your Guide to Halal Restaurants";
+        let title = "Halal Food Near Me - Find Halal Restaurants";
         let description =
-            "Find the best Halal restaurants, takeaways, and eateries in your city. Browse by country, state, or city.";
+            "Your ultimate directory for halal restaurants. Find halal chinese food, mexican food, and more in the USA, UK, and Canada.";
 
         if (city && state && country) {
-            title = `Halal Restaurants in ${city}, ${state}, ${country}`;
-            description = `Find, review, and get directions to the best Halal restaurants in ${city}, ${state}.`;
+            title = `The Best Halal Restaurants in ${city}, ${state}`;
+            description = `Looking for halal food near you in ${city}? Browse our directory for the best halal mexican food, chinese food, and more. Find restaurants open now.`;
         } else if (state && country) {
-            title = `Halal Restaurants in ${state}, ${country}`;
-            description = `Browse all Halal-certified restaurants across cities in ${state}, ${country}.`;
+            title = `Best Halal Food in ${state}, ${country}`;
+            description = `The complete guide to halal dining in ${state}. Discover the best halal restaurants, from shawarma to chicken, across all cities.`;
         } else if (country) {
-            title = `Halal Restaurants in ${country}`;
-            description = `The complete guide to Halal food and dining in ${country}.`;
+            title = `Halal Food Directory for ${country.toUpperCase()}`;
+            description = `Find ${country.toUpperCase()} halal food near you. Our directory lists the best halal restaurants, including chinese, mexican, and more cuisines.`;
         }
 
         fs.readFile(indexPath, "utf8", (err, htmlData) => {

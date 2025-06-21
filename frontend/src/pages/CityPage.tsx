@@ -7,6 +7,8 @@ import FilterBar from "../components/FilterBar";
 import config from "../config";
 import { Restaurant, Pagination } from "../types";
 import FoodSpinner from "../components/FoodSpinner";
+import SortControls from "../components/SortControls";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 
 type SortOption = "name" | "rating" | "distance" | "random";
 
@@ -166,12 +168,16 @@ const CityPage: React.FC = () => {
     };
 
     if (loading) {
-        return <FoodSpinner message="Loading restaurants..." />;
+        return (
+            <div className="pt-20">
+                <FoodSpinner message="Loading restaurants..." />
+            </div>
+        );
     }
 
     if (error) {
         return (
-            <div className="container mx-auto px-4 py-12 text-center">
+            <div className="container mx-auto px-4 py-12 text-center pt-28">
                 <p className="text-red-600 mb-4">{error}</p>
                 <button
                     onClick={() => navigate(`/${safeCountry}/${safeState}`)}
@@ -194,55 +200,58 @@ const CityPage: React.FC = () => {
               );
 
     return (
-        <div>
-            <div className="bg-white border-b">
-                <div className="container mx-auto px-4 py-8">
-                    <Breadcrumbs
-                        items={
-                            safeCountry.toLowerCase() === "uk"
-                                ? [
-                                      { label: "Home", href: "/" },
-                                      {
-                                          label: "United Kingdom",
-                                          href: "/uk",
-                                      },
-                                      {
-                                          label: cityName,
-                                          href: `/uk/city/${safeCity}`,
-                                      },
-                                  ]
-                                : [
-                                      { label: "Home", href: "/" },
-                                      {
-                                          label:
-                                              safeCountry
-                                                  .charAt(0)
-                                                  .toUpperCase() +
-                                              safeCountry.slice(1),
-                                          href: `/${safeCountry}`,
-                                      },
-                                      {
-                                          label: stateNameFromSlug,
-                                          href: `/${safeCountry}/${safeState}`,
-                                      },
-                                      {
-                                          label: cityName,
-                                          href: `/${safeCountry}/${safeState}/${safeCity}`,
-                                      },
-                                  ]
-                        }
-                    />
-
-                    <div className="mt-6 flex items-center gap-4">
-                        <MapPin className="h-8 w-8 text-primary" />
-                        <h1 className="text-4xl font-bold text-gray-900">
-                            Halal Restaurants in {cityName}
-                        </h1>
-                    </div>
-                </div>
+        <div className="bg-gray-50 min-h-screen pt-20">
+            <div className="container mx-auto px-4 py-8">
+                <Breadcrumbs
+                    items={
+                        safeCountry.toLowerCase() === "uk"
+                            ? [
+                                  { label: "Home", href: "/" },
+                                  {
+                                      label: "United Kingdom",
+                                      href: "/uk",
+                                  },
+                                  {
+                                      label: cityName,
+                                      href: `/uk/city/${safeCity}`,
+                                  },
+                              ]
+                            : [
+                                  { label: "Home", href: "/" },
+                                  {
+                                      label:
+                                          safeCountry.charAt(0).toUpperCase() +
+                                          safeCountry.slice(1),
+                                      href: `/${safeCountry}`,
+                                  },
+                                  {
+                                      label: stateNameFromSlug,
+                                      href: `/${safeCountry}/${safeState}`,
+                                  },
+                                  {
+                                      label: cityName,
+                                      href: `/${safeCountry}/${safeState}/${safeCity}`,
+                                  },
+                              ]
+                    }
+                />
             </div>
 
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4">
+                <DisclaimerBanner />
+
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-4xl font-bold text-gray-800">
+                        {cityName} Halal Restaurants
+                    </h1>
+                    <SortControls
+                        sort={sortBy}
+                        setSort={setSortBy}
+                        direction={sortDirection}
+                        setDirection={setSortDirection}
+                    />
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     <div className="lg:col-span-1">
                         <div className="sticky top-8">
@@ -294,62 +303,6 @@ const CityPage: React.FC = () => {
                                 activeCuisine={activeCuisine}
                                 onCuisineChange={handleCuisineChange}
                             />
-                        </div>
-
-                        {/* Sort Options */}
-                        <div className="mb-6 flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <ArrowUpDown className="h-5 w-5 text-gray-500" />
-                                <span className="text-gray-700">Sort by:</span>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleSortChange("name")}
-                                    className={`px-3 py-1 rounded-full text-sm ${
-                                        sortBy === "name"
-                                            ? "bg-black text-white"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    }`}
-                                >
-                                    Name{" "}
-                                    {sortBy === "name" &&
-                                        (sortDirection === "asc" ? "↑" : "↓")}
-                                </button>
-                                <button
-                                    onClick={() => handleSortChange("rating")}
-                                    className={`px-3 py-1 rounded-full text-sm ${
-                                        sortBy === "rating"
-                                            ? "bg-black text-white"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    }`}
-                                >
-                                    Rating{" "}
-                                    {sortBy === "rating" &&
-                                        (sortDirection === "asc" ? "↑" : "↓")}
-                                </button>
-                                <button
-                                    onClick={() => handleSortChange("distance")}
-                                    className={`px-3 py-1 rounded-full text-sm ${
-                                        sortBy === "distance"
-                                            ? "bg-black text-white"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    }`}
-                                >
-                                    Distance{" "}
-                                    {sortBy === "distance" &&
-                                        (sortDirection === "asc" ? "↑" : "↓")}
-                                </button>
-                                <button
-                                    onClick={() => handleSortChange("random")}
-                                    className={`px-3 py-1 rounded-full text-sm ${
-                                        sortBy === "random"
-                                            ? "bg-black text-white"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    }`}
-                                >
-                                    Random
-                                </button>
-                            </div>
                         </div>
 
                         <div className="mb-8">
