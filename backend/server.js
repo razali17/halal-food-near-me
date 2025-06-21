@@ -129,6 +129,15 @@ app.use("/api", apiRoutes);
 
 // --- SEO & Frontend Serving ---
 
+// Middleware to prevent API routes from being handled by frontend serving logic
+app.use((req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+        return next(); // Pass to the API router, do not attempt to serve files
+    }
+    // For all other requests, proceed to the static file serving and SEO logic
+    next();
+});
+
 // Serve React build files from the 'dist' directory
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
