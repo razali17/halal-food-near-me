@@ -14,6 +14,16 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const DEFAULT_IMAGE_URL =
     process.env.DEFAULT_IMAGE_URL || "/images/default-restaurant.jpg";
 
+// Request logger middleware - THIS IS FOR DEBUGGING
+app.use((req, res, next) => {
+    console.log(
+        `[${new Date().toISOString()}] ${req.method} ${
+            req.originalUrl
+        } - Host: ${req.get("host")}`
+    );
+    next();
+});
+
 // Middleware to redirect apex domain to www
 app.use((req, res, next) => {
     // In production, Heroku sends 'x-forwarded-proto'
