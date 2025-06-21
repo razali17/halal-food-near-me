@@ -127,6 +127,11 @@ process.on("unhandledRejection", (err) => {
 // All API calls will be handled by our new router
 app.use("/api", apiRoutes);
 
+// API 404 handler - This must be after the API router and before the frontend serving logic
+app.use("/api/*", (req, res) => {
+    res.status(404).json({ error: "API endpoint not found" });
+});
+
 // --- SEO & Frontend Serving ---
 
 // Middleware to prevent API routes from being handled by frontend serving logic
