@@ -8,27 +8,6 @@ import NotFoundPage from "./NotFoundPage";
 // import CuisineSection from "../components/CuisineSection";
 // import { cuisines } from "../data/cuisines";
 
-const countryStyles: Record<
-    string,
-    { gradient: string; iconBg: string; text: string }
-> = {
-    usa: {
-        gradient: "from-emerald-700 to-emerald-900",
-        iconBg: "bg-emerald-500",
-        text: "text-emerald-800",
-    },
-    canada: {
-        gradient: "from-red-700 to-red-900",
-        iconBg: "bg-red-500",
-        text: "text-red-800",
-    },
-    uk: {
-        gradient: "from-blue-700 to-blue-900",
-        iconBg: "bg-blue-500",
-        text: "text-blue-800",
-    },
-};
-
 const CountryPage: React.FC = () => {
     const { country } = useParams<{ country: string }>();
     const [regions, setRegions] = useState<string[]>([]);
@@ -37,15 +16,36 @@ const CountryPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     // const featuredCuisines = cuisines.slice(0, 3); // Uncomment if you want to show cuisines
 
-    // Client-side validation
     if (!country || !ALLOWED_COUNTRIES.includes(country.toLowerCase())) {
         return <NotFoundPage />;
     }
 
     const countryKey = (country || "").toLowerCase();
-    const styles = countryStyles[countryKey] || countryStyles.usa;
+    const isUk = countryKey === "uk";
+
     const countryTitle =
         countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
+
+    const styles = {
+        gradient:
+            countryKey === "canada"
+                ? "from-red-600 to-red-800"
+                : countryKey === "usa"
+                ? "from-blue-600 to-blue-800"
+                : "from-green-600 to-green-800",
+        iconBg:
+            countryKey === "canada"
+                ? "bg-red-500"
+                : countryKey === "usa"
+                ? "bg-blue-500"
+                : "bg-green-500",
+        text:
+            countryKey === "canada"
+                ? "text-red-700"
+                : countryKey === "usa"
+                ? "text-blue-700"
+                : "text-green-700",
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -53,20 +53,15 @@ const CountryPage: React.FC = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const delay = new Promise((resolve) =>
-                    setTimeout(resolve, 1000)
-                );
-                if (countryKey === "uk") {
-                    // Fetch all cities for UK
+
+                if (isUk) {
                     const response = await fetch(
                         `${config.apiUrl}/api/cities?country=UK`
                     );
                     if (!response.ok) throw new Error("Failed to fetch cities");
                     const data = await response.json();
-                    await delay;
                     setCities(data);
                 } else {
-                    // Fetch regions for other countries
                     const response = await fetch(
                         `${
                             config.apiUrl
@@ -75,7 +70,6 @@ const CountryPage: React.FC = () => {
                     if (!response.ok)
                         throw new Error("Failed to fetch regions");
                     const data = await response.json();
-                    await delay;
                     setRegions(data);
                 }
             } catch (err) {
@@ -87,18 +81,18 @@ const CountryPage: React.FC = () => {
             }
         };
         fetchData();
-    }, [country, countryKey]);
+    }, [country, isUk]);
 
     if (loading) {
-        return <FoodSpinner message="Loading states/provinces..." />;
+        return (
+            <FoodSpinner
+                message={isUk ? "Loading cities..." : "Loading regions..."}
+            />
+        );
     }
 
     if (error) {
-        return (
-            <div className="container mx-auto px-4 py-12 text-center">
-                <p className="text-red-600">{error}</p>
-            </div>
-        );
+        return <div className="text-red-600 text-center py-10">{error}</div>;
     }
 
     return (
@@ -148,7 +142,7 @@ const CountryPage: React.FC = () => {
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                            {countryKey === "uk"
+                            {isUk
                                 ? "Find Halal Restaurants by City"
                                 : "Find Halal Restaurants by Region"}
                         </h2>
@@ -159,14 +153,14 @@ const CountryPage: React.FC = () => {
                     {loading ? (
                         <FoodSpinner
                             message={
-                                countryKey === "uk"
+                                isUk
                                     ? "Loading cities..."
                                     : "Loading regions..."
                             }
                         />
                     ) : error ? (
                         <div className="text-red-600 text-center">{error}</div>
-                    ) : countryKey === "uk" ? (
+                    ) : isUk ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
                             {cities.map((city) => (
                                 <Link
@@ -197,22 +191,6 @@ const CountryPage: React.FC = () => {
                     )}
                 </div>
             </section>
-
-            {/*
-            <section id="explore" className="container mx-auto px-4 py-16">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                        Explore Halal Cuisines in {countryTitle}
-                    </h2>
-                    <p className="text-gray-600 max-w-3xl mx-auto">
-                        From traditional to fusion dishes, discover a variety of halal food options that showcase {countryTitle}'s multicultural food scene.
-                    </p>
-                </div>
-                {featuredCuisines.map((cuisine) => (
-                    <CuisineSection key={cuisine.id} cuisine={cuisine} />
-                ))}
-            </section>
-            */}
         </div>
     );
 };

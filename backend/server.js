@@ -14,13 +14,14 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const DEFAULT_IMAGE_URL =
     process.env.DEFAULT_IMAGE_URL || "/images/default-restaurant.jpg";
 
-// Request logger middleware - THIS IS FOR DEBUGGING
+// Middleware to normalize multiple slashes in the URL path.
 app.use((req, res, next) => {
-    console.log(
-        `[${new Date().toISOString()}] ${req.method} ${
-            req.originalUrl
-        } - Host: ${req.get("host")}`
-    );
+    if (req.path.includes("//")) {
+        const newPath = req.path.replace(/\/{2,}/g, "/");
+        // Re-add query string if it exists
+        const search = req.originalUrl.substring(req.path.length);
+        req.url = newPath + search;
+    }
     next();
 });
 
@@ -36,9 +37,6 @@ app.use((req, res, next) => {
         host === "halalfoodnearme.org"
     ) {
         const fullUrl = `${protocol}://www.halalfoodnearme.org${req.originalUrl}`;
-        console.log(
-            `Redirecting apex domain: ${host}${req.originalUrl} -> ${fullUrl}`
-        );
         return res.redirect(301, fullUrl);
     }
 
