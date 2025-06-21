@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { UtensilsCrossed } from "lucide-react";
 import config from "../config";
 import FoodSpinner from "../components/FoodSpinner";
+import { ALLOWED_COUNTRIES } from "../constants";
+import NotFoundPage from "./NotFoundPage";
 // import CuisineSection from "../components/CuisineSection";
 // import { cuisines } from "../data/cuisines";
 
@@ -34,6 +36,11 @@ const CountryPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     // const featuredCuisines = cuisines.slice(0, 3); // Uncomment if you want to show cuisines
+
+    // Client-side validation
+    if (!country || !ALLOWED_COUNTRIES.includes(country.toLowerCase())) {
+        return <NotFoundPage />;
+    }
 
     const countryKey = (country || "").toLowerCase();
     const styles = countryStyles[countryKey] || countryStyles.usa;

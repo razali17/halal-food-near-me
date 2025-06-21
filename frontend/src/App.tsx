@@ -13,6 +13,7 @@ import UKCityDetail from "./pages/UKCityDetail";
 import CountryPage from "./pages/CountryPage";
 import StateOrProvincePage from "./pages/StateOrProvincePage";
 import CityPage from "./pages/CityPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
     return (
@@ -32,6 +33,7 @@ function App() {
                             path="/:country/:stateorprovince/:city"
                             element={<CityPage />}
                         />
+                        <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </main>
 

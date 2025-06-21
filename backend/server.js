@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs"); // Import the file system module
-const Restaurant = require("./models/Restaurant");
+const apiRoutes = require("./routes/api"); // Import the new API router
 const { normalizeRegion } = require("./utils/regionMaps");
 
 const app = express();
@@ -123,240 +123,20 @@ process.on("unhandledRejection", (err) => {
     console.error(err.stack);
 });
 
-// Routes
-
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", message: "Server is running" });
-});
-
-// Get all restaurants
-app.get("/api/restaurants", async (req, res) => {
-    try {
-        const { state, city, country = "Canada", cuisine } = req.query;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 50;
-        const skip = (page - 1) * limit;
-
-        const query = { country };
-        if (state) query.state = { $regex: new RegExp(state, "i") };
-        if (city) query.city = { $regex: new RegExp(city, "i") };
-        if (cuisine) query.cuisineType = { $regex: new RegExp(cuisine, "i") };
-
-        // Get total count for pagination
-        const total = await Restaurant.countDocuments(query);
-
-        // Get paginated results
-        const restaurants = await Restaurant.find(query)
-            .skip(skip)
-            .limit(limit)
-            .lean(); // Use lean() for better performance
-
-        res.json({
-            restaurants,
-            pagination: {
-                total,
-                page,
-                pages: Math.ceil(total / limit),
-                hasMore: skip + restaurants.length < total,
-            },
-        });
-    } catch (error) {
-        console.error("Error fetching restaurants:", error);
-        res.status(500).json({ error: "Failed to fetch restaurants" });
-    }
-});
-
-// Unified: Get all regions (states/provinces) for a country
-app.get("/api/regions", async (req, res) => {
-    try {
-        const country = req.query.country;
-        console.log("/api/regions called with country:", country);
-        if (!country)
-            return res.status(400).json({ message: "country is required" });
-        // Use case-insensitive regex for country
-        const query = { country: new RegExp(`^${country}$`, "i") };
-        console.log("MongoDB query:", query);
-        const regions = await Restaurant.distinct("state", query);
-        console.log("MongoDB result (regions):", regions);
-        // Normalize and deduplicate regions
-        const normalized = Array.from(
-            new Set(regions.map((r) => normalizeRegion(r, country)))
-        ).filter(Boolean);
-        console.log("Normalized regions:", normalized);
-        res.json(normalized.sort());
-    } catch (error) {
-        console.error("/api/regions error:", error);
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Unified: Get all cities for a country and region
-app.get("/api/cities", async (req, res) => {
-    try {
-        const { country, state } = req.query;
-        if (!country)
-            return res.status(400).json({ message: "country is required" });
-        const query = { country: new RegExp(`^${country}$`, "i") };
-        if (state) query.state = { $regex: new RegExp(state, "i") };
-        const cities = await Restaurant.distinct("city", query);
-        res.json(cities.sort());
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Search restaurants by name or description
-app.get("/api/restaurants/search", async (req, res) => {
-    try {
-        const { q, country = "Canada" } = req.query;
-        if (!q) {
-            return res
-                .status(400)
-                .json({ message: "Search query is required" });
-        }
-
-        const restaurants = await Restaurant.find(
-            {
-                $text: { $search: q },
-                country,
-            },
-            { score: { $meta: "textScore" } }
-        ).sort({ score: { $meta: "textScore" } });
-
-        res.json(restaurants);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Unified: Get restaurants by location (country, state, city)
-app.get("/api/restaurants/location", async (req, res) => {
-    try {
-        const { city, state, country = "Canada" } = req.query;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 50;
-        const skip = (page - 1) * limit;
-
-        console.log("/api/restaurants/location called with:", {
-            country,
-            state,
-            city,
-            page,
-            limit,
-        });
-
-        // Use case-insensitive regex for country
-        const query = { country: new RegExp(`^${country}$`, "i") };
-        if (state) query.state = { $regex: new RegExp(state, "i") };
-        if (city) query.city = { $regex: new RegExp(city, "i") };
-
-        console.log("MongoDB query:", query);
-
-        // Sorting logic
-        let sortField = req.query.sort || "name";
-        let sortDirection = req.query.direction === "desc" ? -1 : 1;
-        let sortObj = {};
-        let useRandom = false;
-        if (sortField === "rating") {
-            sortObj["rating"] = sortDirection;
-        } else if (sortField === "random") {
-            useRandom = true;
-        } else {
-            sortObj["name"] = sortDirection;
-        }
-
-        // Get total count for pagination
-        const total = await Restaurant.countDocuments(query);
-
-        let restaurants;
-        if (useRandom) {
-            // Use aggregation with $match and $sample for random sort
-            restaurants = await Restaurant.aggregate([
-                { $match: query },
-                { $sample: { size: limit } },
-            ]);
-        } else {
-            // Get paginated results
-            restaurants = await Restaurant.find(query)
-                .sort(sortObj)
-                .skip(skip)
-                .limit(limit)
-                .lean();
-        }
-
-        console.log("Restaurants found:", restaurants.length, "/", total);
-
-        res.json({
-            restaurants,
-            pagination: {
-                total,
-                page,
-                pages: Math.ceil(total / limit),
-                hasMore: skip + restaurants.length < total,
-            },
-        });
-    } catch (error) {
-        console.error("Error fetching restaurants:", error);
-        res.status(500).json({ error: "Failed to fetch restaurants" });
-    }
-});
-
-// Add a new restaurant
-app.post("/api/restaurants", async (req, res) => {
-    try {
-        const restaurant = new Restaurant(req.body);
-        const newRestaurant = await restaurant.save();
-        res.status(201).json(newRestaurant);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-});
-
-// Update a restaurant
-app.put("/api/restaurants/:id", async (req, res) => {
-    try {
-        const restaurant = await Restaurant.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
-        if (!restaurant) {
-            return res.status(404).json({ message: "Restaurant not found" });
-        }
-        res.json(restaurant);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-});
-
-// Delete a restaurant
-app.delete("/api/restaurants/:id", async (req, res) => {
-    try {
-        const restaurant = await Restaurant.findByIdAndDelete(req.params.id);
-        if (!restaurant) {
-            return res.status(404).json({ message: "Restaurant not found" });
-        }
-        res.json({ message: "Restaurant deleted" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Deprecated endpoints (for reference, can be removed after migration):
-// app.get("/api/provinces", ...)
-// app.get("/api/cities/:state", ...)
-// app.get("/api/restaurants/state/:state", ...)
-// app.get("/api/restaurants/city/:city", ...)
+// --- API Routes ---
+// All API calls will be handled by our new router
+app.use("/api", apiRoutes);
 
 // --- SEO & Frontend Serving ---
 
-// Serve React build files
+// Serve React build files from the 'dist' directory
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+const ALLOWED_COUNTRIES = ["usa", "canada", "uk"];
 
 // This route handles dynamic meta tags for SEO
 app.get("/:country/:state?/:city?", async (req, res, next) => {
-    // Let static file handler handle requests for assets
+    // Let static file handler handle requests for assets like CSS or JS
     if (req.path.includes(".")) {
         return next();
     }
@@ -369,12 +149,18 @@ app.get("/:country/:state?/:city?", async (req, res, next) => {
             "index.html"
         );
 
-        // Default SEO values
+        // Validate the country parameter (case-insensitive)
+        if (!ALLOWED_COUNTRIES.includes(country.toLowerCase())) {
+            // If country is not valid, send 404 status but still serve the app
+            // so React Router can display its own Not Found page.
+            return res.status(404).sendFile(indexPath);
+        }
+
+        // Dynamic SEO values based on URL
         let title = "Halal Food Near Me - Your Guide to Halal Restaurants";
         let description =
             "Find the best Halal restaurants, takeaways, and eateries in your city. Browse by country, state, or city.";
 
-        // Dynamic SEO values based on URL
         if (city && state && country) {
             title = `Halal Restaurants in ${city}, ${state}, ${country}`;
             description = `Find, review, and get directions to the best Halal restaurants in ${city}, ${state}.`;
