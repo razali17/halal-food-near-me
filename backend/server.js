@@ -14,6 +14,27 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const DEFAULT_IMAGE_URL =
     process.env.DEFAULT_IMAGE_URL || "/images/default-restaurant.jpg";
 
+// Middleware to redirect apex domain to www
+app.use((req, res, next) => {
+    // In production, Heroku sends 'x-forwarded-proto'
+    const protocol = req.get("x-forwarded-proto") || req.protocol;
+    const host = req.get("host");
+
+    // Only redirect in production environment
+    if (
+        process.env.NODE_ENV === "production" &&
+        host === "halalfoodnearme.org"
+    ) {
+        const fullUrl = `${protocol}://www.halalfoodnearme.org${req.originalUrl}`;
+        console.log(
+            `Redirecting apex domain: ${host}${req.originalUrl} -> ${fullUrl}`
+        );
+        return res.redirect(301, fullUrl);
+    }
+
+    next();
+});
+
 // CORS configuration
 const allowedOrigins = [
     "https://www.halalfoodnearme.org",
