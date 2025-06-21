@@ -83,7 +83,7 @@ const CityLinks: React.FC<CityLinksProps> = ({ state, stateSlug }) => {
                     {cities.map((city) => (
                         <Link
                             key={city.toLowerCase().replace(/\s+/g, "-")}
-                            to={`/state/${stateSlug}/${city
+                            to={`/usa/${stateSlug}/${city
                                 .toLowerCase()
                                 .replace(/\s+/g, "-")}`}
                             className="block text-gray-700 hover:text-emerald-600 hover:underline transition duration-300"

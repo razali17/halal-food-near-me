@@ -79,7 +79,7 @@ const UKCityLinks: React.FC = () => {
                     {cities.map((city) => (
                         <Link
                             key={city.toLowerCase().replace(/\s+/g, "-")}
-                            to={`/uk/city/${city
+                            to={`/uk/england/${city
                                 .toLowerCase()
                                 .replace(/\s+/g, "-")}`}
                             className="block text-gray-700 hover:text-emerald-600 hover:underline transition duration-300"

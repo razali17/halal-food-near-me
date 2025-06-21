@@ -84,7 +84,7 @@ const CityDetail: React.FC = () => {
             <div className="container mx-auto px-4 py-12 text-center">
                 <p className="text-red-600 mb-4">{error}</p>
                 <button
-                    onClick={() => navigate(`/state/${stateSlug}`)}
+                    onClick={() => navigate(`/usa/${stateSlug}`)}
                     className="text-emerald-600 hover:text-emerald-700 underline"
                 >
                     Back to {state.name}
@@ -106,9 +106,9 @@ const CityDetail: React.FC = () => {
     return (
         <div>
             <Breadcrumbs
-                customItems={[
-                    { name: state.name, path: `/state/${stateSlug}` },
-                    { name: cityName, path: `/state/${stateSlug}/${citySlug}` },
+                items={[
+                    { label: state.name, href: `/usa/${stateSlug}` },
+                    { label: cityName, href: `/usa/${stateSlug}/${citySlug}` },
                 ]}
             />
 

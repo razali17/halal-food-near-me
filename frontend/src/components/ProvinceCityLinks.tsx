@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Province } from "../types";
+import config from "../config";
 
 interface ProvinceCityLinksProps {
-    province: string;
-    provinceSlug: string;
+    province: Province;
 }
 
-const ProvinceCityLinks: React.FC<ProvinceCityLinksProps> = ({
-    province,
-    provinceSlug,
-}) => {
+const ProvinceCityLinks: React.FC<ProvinceCityLinksProps> = ({ province }) => {
     const [cities, setCities] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCities = async () => {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `http://localhost:5001/api/cities/${province}`
+                    `${config.apiUrl}/api/cities/${province.name}?country=Canada`
                 );
                 if (!response.ok) {
                     throw new Error("Failed to fetch cities");
@@ -36,45 +35,59 @@ const ProvinceCityLinks: React.FC<ProvinceCityLinksProps> = ({
         };
 
         fetchCities();
-    }, [province]);
+    }, [province.name]);
+
+    const handleCityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const city = event.target.value;
+        if (city) {
+            navigate(
+                `/canada/${province.slug}/${city
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}`
+            );
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="text-center text-gray-600">Loading cities...</div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center text-red-600">
+                <p>{error}</p>
+            </div>
+        );
+    }
+
+    if (cities.length === 0) {
+        return (
+            <div className="text-center text-gray-600">
+                <p>No cities found in {province.name}.</p>
+                <p>Check back soon for updates!</p>
+            </div>
+        );
+    }
 
     return (
-        <section className="bg-gray-50 py-12">
-            <div className="container mx-auto px-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-                    Cities in {province}
-                </h2>
-
-                {loading ? (
-                    <div className="text-center text-gray-600">
-                        <p>Loading cities...</p>
-                    </div>
-                ) : error ? (
-                    <div className="text-center text-red-600">
-                        <p>{error}</p>
-                    </div>
-                ) : cities.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
-                        {cities.map((city) => (
-                            <Link
-                                key={city.toLowerCase().replace(/\s+/g, "-")}
-                                to={`/province/${provinceSlug}/${city
-                                    .toLowerCase()
-                                    .replace(/\s+/g, "-")}`}
-                                className="block text-gray-700 hover:text-emerald-600 hover:underline transition duration-300"
-                            >
-                                {city}
-                            </Link>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center text-gray-600">
-                        <p>No cities found in {province}.</p>
-                        <p>Check back soon for updates!</p>
-                    </div>
-                )}
-            </div>
-        </section>
+        <div className="w-full">
+            <select
+                onChange={handleCityChange}
+                className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                defaultValue=""
+            >
+                <option value="" disabled>
+                    Select a city
+                </option>
+                {cities.map((city) => (
+                    <option key={city} value={city}>
+                        {city}
+                    </option>
+                ))}
+            </select>
+        </div>
     );
 };
 

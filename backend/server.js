@@ -3,7 +3,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs"); // Import the file system module
 const Restaurant = require("./models/Restaurant");
+const { normalizeRegion } = require("./utils/regionMaps");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -12,27 +14,43 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const DEFAULT_IMAGE_URL =
     process.env.DEFAULT_IMAGE_URL || "/images/default-restaurant.jpg";
 
-// CORS headers must be set before any routes or middleware
-app.use((req, res, next) => {
-    res.setHeader(
-        "Access-Control-Allow-Origin",
-        "https://www.halalfoodnearme.org"
-    );
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS"
-    );
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization"
-    );
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+// CORS configuration
+const allowedOrigins = [
+    "https://www.halalfoodnearme.org",
+    "https://halalfoodnearme.org",
+    "http://localhost:5173", // Add local development server
+    "http://127.0.0.1:5173", // Add local development server alternative
+];
 
-    // Handle preflight
-    if (req.method === "OPTIONS") {
-        return res.status(200).end();
-    }
-    next();
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            if (allowedOrigins.indexOf(origin) === -1) {
+                const msg =
+                    "The CORS policy for this site does not allow access from the specified Origin.";
+                return callback(new Error(msg), false);
+            }
+            return callback(null, true);
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+        ],
+    })
+);
+
+// Basic error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: "Something broke!" });
 });
 
 // Body parsing middleware with limits
@@ -41,6 +59,11 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Serve images from a public directory
 app.use("/images", express.static(path.join(__dirname, "public/images")));
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 // Connect to MongoDB
 mongoose
@@ -69,30 +92,15 @@ mongoose.connection.on("error", (err) => {
 // Handle process errors
 process.on("uncaughtException", (err) => {
     console.error("Uncaught Exception:", err);
-    // Attempt graceful shutdown
-    shutdown();
+    // Log error and continue instead of shutting down
+    console.error(err.stack);
 });
 
 process.on("unhandledRejection", (err) => {
     console.error("Unhandled Rejection:", err);
-    // Attempt graceful shutdown
-    shutdown();
+    // Log error and continue instead of shutting down
+    console.error(err.stack);
 });
-
-// Graceful shutdown function
-function shutdown() {
-    console.log("Attempting graceful shutdown...");
-    mongoose.connection
-        .close()
-        .then(() => {
-            console.log("MongoDB connection closed.");
-            process.exit(1);
-        })
-        .catch((err) => {
-            console.error("Error during shutdown:", err);
-            process.exit(1);
-        });
-}
 
 // Routes
 
@@ -104,52 +112,76 @@ app.get("/api/health", (req, res) => {
 // Get all restaurants
 app.get("/api/restaurants", async (req, res) => {
     try {
-        const restaurants = await Restaurant.find();
-        res.json(restaurants);
+        const { state, city, country = "Canada", cuisine } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
+
+        const query = { country };
+        if (state) query.state = { $regex: new RegExp(state, "i") };
+        if (city) query.city = { $regex: new RegExp(city, "i") };
+        if (cuisine) query.cuisineType = { $regex: new RegExp(cuisine, "i") };
+
+        // Get total count for pagination
+        const total = await Restaurant.countDocuments(query);
+
+        // Get paginated results
+        const restaurants = await Restaurant.find(query)
+            .skip(skip)
+            .limit(limit)
+            .lean(); // Use lean() for better performance
+
+        res.json({
+            restaurants,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit),
+                hasMore: skip + restaurants.length < total,
+            },
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error fetching restaurants:", error);
+        res.status(500).json({ error: "Failed to fetch restaurants" });
     }
 });
 
-// Get all provinces/states
-app.get("/api/provinces", async (req, res) => {
+// Unified: Get all regions (states/provinces) for a country
+app.get("/api/regions", async (req, res) => {
     try {
-        const country = req.query.country || "Canada";
-        const states = await Restaurant.distinct("state", { country });
-        res.json(states.sort());
+        const country = req.query.country;
+        console.log("/api/regions called with country:", country);
+        if (!country)
+            return res.status(400).json({ message: "country is required" });
+        // Use case-insensitive regex for country
+        const query = { country: new RegExp(`^${country}$`, "i") };
+        console.log("MongoDB query:", query);
+        const regions = await Restaurant.distinct("state", query);
+        console.log("MongoDB result (regions):", regions);
+        // Normalize and deduplicate regions
+        const normalized = Array.from(
+            new Set(regions.map((r) => normalizeRegion(r, country)))
+        ).filter(Boolean);
+        console.log("Normalized regions:", normalized);
+        res.json(normalized.sort());
     } catch (error) {
+        console.error("/api/regions error:", error);
         res.status(500).json({ message: error.message });
     }
 });
 
-// Get all cities
+// Unified: Get all cities for a country and region
 app.get("/api/cities", async (req, res) => {
     try {
-        const country = req.query.country || "Canada";
-        const cities = await Restaurant.distinct("city", { country });
+        const { country, state } = req.query;
+        if (!country)
+            return res.status(400).json({ message: "country is required" });
+        const query = { country: new RegExp(`^${country}$`, "i") };
+        if (state) query.state = { $regex: new RegExp(state, "i") };
+        const cities = await Restaurant.distinct("city", query);
         res.json(cities.sort());
     } catch (error) {
         res.status(500).json({ message: error.message });
-    }
-});
-
-// Get cities by province/state
-app.get("/api/cities/:state", async (req, res) => {
-    try {
-        const country = req.query.country || "Canada";
-        const cities = await Restaurant.distinct("city", {
-            state: { $regex: new RegExp(req.params.state, "i") },
-            country,
-        });
-        res.json(cities.sort());
-    } catch (error) {
-        console.error("Error fetching cities:", error); // Error log
-        res.status(500).json({
-            message: "Error fetching cities",
-            error: error.message,
-            state: req.params.state,
-            country: req.query.country,
-        });
     }
 });
 
@@ -177,112 +209,75 @@ app.get("/api/restaurants/search", async (req, res) => {
     }
 });
 
-// Get restaurants by state/province
-app.get("/api/restaurants/state/:state", async (req, res) => {
-    try {
-        const country = req.query.country || "Canada";
-        const restaurants = await Restaurant.find({
-            state: { $regex: new RegExp(req.params.state, "i") },
-            country,
-        });
-        res.json(restaurants);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Get restaurants by city
-app.get("/api/restaurants/city/:city", async (req, res) => {
-    try {
-        const country = req.query.country || "Canada";
-        const restaurants = await Restaurant.find({
-            city: { $regex: new RegExp(req.params.city, "i") },
-            country,
-        });
-        res.json(restaurants);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Get restaurants by postal code
-app.get("/api/restaurants/postal/:postalCode", async (req, res) => {
-    try {
-        const restaurants = await Restaurant.find({
-            postal_code: { $regex: new RegExp(req.params.postalCode, "i") },
-        });
-        res.json(restaurants);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Get restaurants by location (city and state)
+// Unified: Get restaurants by location (country, state, city)
 app.get("/api/restaurants/location", async (req, res) => {
     try {
         const { city, state, country = "Canada" } = req.query;
-        const query = { country };
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
 
-        if (city) {
-            query.city = { $regex: new RegExp(city, "i") };
-        }
-        if (state) {
-            query.state = { $regex: new RegExp(state, "i") };
-        }
-
-        const restaurants = await Restaurant.find(query);
-
-        // Transform the data to match frontend format
-        const transformedRestaurants = restaurants.map((restaurant) => {
-            // Convert MongoDB document to plain object
-            const rest = restaurant.toObject();
-
-            // Transform _id to id
-            rest.id = rest._id.toString();
-            delete rest._id;
-            delete rest.__v;
-
-            // Handle photo URLs
-            if (rest.photo) {
-                if (rest.photo.includes("AF1QipP")) {
-                    // Keep AF1QipP URLs as they are
-                    rest.photo = rest.photo;
-                } else if (
-                    rest.street_view &&
-                    rest.street_view.includes("AF1QipP")
-                ) {
-                    // Use street view if it's in AF1QipP format
-                    rest.photo = rest.street_view;
-                } else {
-                    // Use default image URL from environment variable
-                    rest.photo = DEFAULT_IMAGE_URL;
-                }
-            } else if (
-                rest.street_view &&
-                rest.street_view.includes("AF1QipP")
-            ) {
-                // Use street view if no photo but street view is available
-                rest.photo = rest.street_view;
-            } else {
-                // Use default if no valid photos available
-                rest.photo = DEFAULT_IMAGE_URL;
-            }
-
-            // Transform logo URLs to higher resolution
-            if (rest.logo && rest.logo.includes("googleusercontent.com")) {
-                // Replace s44 with s200 for higher resolution
-                rest.logo = rest.logo.replace(
-                    /=s\d+(-p)?-k-no(-ns)?(-nd)?/,
-                    "=s200-c"
-                );
-            }
-
-            return rest;
+        console.log("/api/restaurants/location called with:", {
+            country,
+            state,
+            city,
+            page,
+            limit,
         });
 
-        res.json(transformedRestaurants);
+        // Use case-insensitive regex for country
+        const query = { country: new RegExp(`^${country}$`, "i") };
+        if (state) query.state = { $regex: new RegExp(state, "i") };
+        if (city) query.city = { $regex: new RegExp(city, "i") };
+
+        console.log("MongoDB query:", query);
+
+        // Sorting logic
+        let sortField = req.query.sort || "name";
+        let sortDirection = req.query.direction === "desc" ? -1 : 1;
+        let sortObj = {};
+        let useRandom = false;
+        if (sortField === "rating") {
+            sortObj["rating"] = sortDirection;
+        } else if (sortField === "random") {
+            useRandom = true;
+        } else {
+            sortObj["name"] = sortDirection;
+        }
+
+        // Get total count for pagination
+        const total = await Restaurant.countDocuments(query);
+
+        let restaurants;
+        if (useRandom) {
+            // Use aggregation with $match and $sample for random sort
+            restaurants = await Restaurant.aggregate([
+                { $match: query },
+                { $sample: { size: limit } },
+            ]);
+        } else {
+            // Get paginated results
+            restaurants = await Restaurant.find(query)
+                .sort(sortObj)
+                .skip(skip)
+                .limit(limit)
+                .lean();
+        }
+
+        console.log("Restaurants found:", restaurants.length, "/", total);
+
+        res.json({
+            restaurants,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit),
+                hasMore: skip + restaurants.length < total,
+            },
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Error fetching restaurants:", error);
+        res.status(500).json({ error: "Failed to fetch restaurants" });
     }
 });
 
@@ -325,4 +320,73 @@ app.delete("/api/restaurants/:id", async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+});
+
+// Deprecated endpoints (for reference, can be removed after migration):
+// app.get("/api/provinces", ...)
+// app.get("/api/cities/:state", ...)
+// app.get("/api/restaurants/state/:state", ...)
+// app.get("/api/restaurants/city/:city", ...)
+
+// --- SEO & Frontend Serving ---
+
+// Serve React build files
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+// This route handles dynamic meta tags for SEO
+app.get("/:country/:state?/:city?", async (req, res, next) => {
+    // Let static file handler handle requests for assets
+    if (req.path.includes(".")) {
+        return next();
+    }
+
+    try {
+        const { country, state, city } = req.params;
+        const indexPath = path.resolve(
+            __dirname,
+            "../frontend/dist",
+            "index.html"
+        );
+
+        // Default SEO values
+        let title = "Halal Food Near Me - Your Guide to Halal Restaurants";
+        let description =
+            "Find the best Halal restaurants, takeaways, and eateries in your city. Browse by country, state, or city.";
+
+        // Dynamic SEO values based on URL
+        if (city && state && country) {
+            title = `Halal Restaurants in ${city}, ${state}, ${country}`;
+            description = `Find, review, and get directions to the best Halal restaurants in ${city}, ${state}.`;
+        } else if (state && country) {
+            title = `Halal Restaurants in ${state}, ${country}`;
+            description = `Browse all Halal-certified restaurants across cities in ${state}, ${country}.`;
+        } else if (country) {
+            title = `Halal Restaurants in ${country}`;
+            description = `The complete guide to Halal food and dining in ${country}.`;
+        }
+
+        fs.readFile(indexPath, "utf8", (err, htmlData) => {
+            if (err) {
+                console.error("Error reading index.html:", err);
+                return res.status(500).end();
+            }
+
+            // Inject dynamic SEO tags
+            let finalHtml = htmlData
+                .replace(/__TITLE__/g, title)
+                .replace(/__DESCRIPTION__/g, description)
+                .replace(/__OG_TITLE__/g, title)
+                .replace(/__OG_DESCRIPTION__/g, description);
+
+            res.send(finalHtml);
+        });
+    } catch (error) {
+        console.error("SEO route error:", error);
+        res.status(500).send("Server error while generating page.");
+    }
+});
+
+// Catch-all to serve React's index.html for any other routes
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
 });

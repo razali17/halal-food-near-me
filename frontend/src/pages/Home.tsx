@@ -3,6 +3,7 @@ import { UtensilsCrossed, ChevronDown, ChevronUp } from "lucide-react";
 import CuisineSection from "../components/CuisineSection";
 import StateLinks from "../components/StateLinks";
 import { cuisines } from "../data/cuisines";
+import { Link } from "react-router-dom";
 
 interface FAQ {
     question: string;
@@ -132,8 +133,8 @@ const Home: React.FC = () => {
                         </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                        <a
-                            href="/usa"
+                        <Link
+                            to="/usa"
                             className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 text-center group"
                         >
                             <h3 className="text-2xl font-bold text-emerald-800 mb-2 group-hover:text-emerald-600">
@@ -142,9 +143,9 @@ const Home: React.FC = () => {
                             <p className="text-gray-600">
                                 Browse halal restaurants across all US states
                             </p>
-                        </a>
-                        <a
-                            href="/uk"
+                        </Link>
+                        <Link
+                            to="/uk"
                             className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 text-center group"
                         >
                             <h3 className="text-2xl font-bold text-emerald-800 mb-2 group-hover:text-emerald-600">
@@ -153,9 +154,9 @@ const Home: React.FC = () => {
                             <p className="text-gray-600">
                                 Discover halal options throughout the UK
                             </p>
-                        </a>
-                        <a
-                            href="/canada"
+                        </Link>
+                        <Link
+                            to="/canada"
                             className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 text-center group"
                         >
                             <h3 className="text-2xl font-bold text-emerald-800 mb-2 group-hover:text-emerald-600">
@@ -164,7 +165,7 @@ const Home: React.FC = () => {
                             <p className="text-gray-600">
                                 Find halal restaurants across Canadian provinces
                             </p>
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </section>

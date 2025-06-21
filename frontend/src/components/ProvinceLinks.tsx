@@ -10,12 +10,12 @@ const ProvinceLinks: React.FC = () => {
                     Find Halal Food By Province
                 </h2>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+                <div className="flex flex-col gap-2 max-w-2xl mx-auto">
                     {provinces.map((province) => (
                         <Link
                             key={province.abbreviation}
-                            to={`/province/${province.slug}`}
-                            className="block text-gray-700 hover:text-emerald-600 hover:underline transition duration-300"
+                            to={`/canada/${province.slug}`}
+                            className="block p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 text-gray-700 hover:text-primary"
                         >
                             {province.name}
                         </Link>

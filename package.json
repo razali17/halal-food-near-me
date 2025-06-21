@@ -1,14 +1,41 @@
 {
-    "name": "halal-food-near-me",
+    "name": "halal-food-near-me-fullstack",
     "version": "1.0.0",
-    "description": "Halal restaurant directory for Canada and USA",
+    "description": "Full-stack Halal food directory application",
+    "main": "backend/server.js",
+    "engines": {
+        "node": "18.x"
+    },
     "scripts": {
-        "start": "concurrently \"npm run backend\" \"npm run frontend\"",
-        "backend": "cd backend && npm run start",
-        "frontend": "cd frontend && npm run dev",
-        "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+        "start": "node backend/server.js",
+        "heroku-postbuild": "cd frontend && npm install && npm run build && cd .. && node backend/scripts/generate-sitemap.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.5.0",
+        "express": "^4.18.2",
+        "mongoose": "^7.0.3",
+        "xlsx": "^0.18.5",
+        "lucide-react": "^0.395.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.23.1",
+        "serve": "^14.2.1"
     },
     "devDependencies": {
-        "concurrently": "^8.2.2"
+        "@types/react": "^18.2.66",
+        "@types/react-dom": "^18.2.22",
+        "@vitejs/plugin-react": "^4.2.1",
+        "autoprefixer": "^10.4.19",
+        "eslint": "^8.57.0",
+        "@typescript-eslint/eslint-plugin": "^7.0.0",
+        "@typescript-eslint/parser": "^7.0.0",
+        "eslint-plugin-react-hooks": "^4.6.0",
+        "eslint-plugin-react-refresh": "^0.4.6",
+        "postcss": "^8.4.38",
+        "tailwindcss": "^3.4.4",
+        "typescript": "^5.2.2",
+        "vite": "^5.2.0",
+        "nodemon": "^2.0.22"
     }
 }

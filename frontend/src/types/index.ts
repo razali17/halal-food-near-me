@@ -46,13 +46,23 @@ export interface CuisineType {
 export interface City {
     name: string;
     slug: string;
-    state?: string;
-    province?: string;
-    description: string;
 }
 
 export interface Province {
     name: string;
-    abbreviation: string;
     slug: string;
+    abbreviation: string;
+    cities: City[];
+}
+
+export interface Pagination {
+    total: number;
+    page: number;
+    pages: number;
+    hasMore: boolean;
+}
+
+export interface PaginatedResponse<T> {
+    restaurants: T[];
+    pagination: Pagination;
 }

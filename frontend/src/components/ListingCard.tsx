@@ -28,20 +28,12 @@ const ListingCard: React.FC<ListingCardProps> = ({ restaurant }) => {
             <div className="flex flex-col md:flex-row">
                 {/* Image Section */}
                 <div className="md:w-1/3 lg:w-1/4">
-                    <div
-                        style={{
-                            backgroundImage: `url("https://lh3.googleusercontent.com/gps-cs-s/AC9...w800-h500-k-no")`,
-                            backgroundSize: "cover",
-                            width: "400px",
-                            height: "250px",
-                        }}
-                    />
                     <div className="relative h-64 md:h-full">
                         <img
                             crossOrigin="anonymous"
                             src={mainImage}
                             alt={restaurant.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-center"
                         />
                         {restaurant.street_view && (
                             <div className="absolute bottom-4 right-4">
@@ -168,19 +160,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ restaurant }) => {
                                     className="inline-flex items-center text-emerald-600 hover:text-emerald-800 text-sm font-medium"
                                 >
                                     <Calendar className="h-4 w-4 mr-1" />
-                                    Book Appointment
-                                </a>
-                            )}
-
-                            {restaurant.logo && (
-                                <a
-                                    href={restaurant.logo}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center text-emerald-600 hover:text-emerald-800 text-sm font-medium"
-                                >
-                                    <Image className="h-4 w-4 mr-1" />
-                                    View Logo
+                                    Order Online
                                 </a>
                             )}
                         </div>

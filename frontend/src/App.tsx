@@ -10,6 +10,9 @@ import ProvinceDetail from "./pages/ProvinceDetail";
 import ProvinceCity from "./pages/ProvinceCity";
 import UK from "./pages/UK";
 import UKCityDetail from "./pages/UKCityDetail";
+import CountryPage from "./pages/CountryPage";
+import StateOrProvincePage from "./pages/StateOrProvincePage";
+import CityPage from "./pages/CityPage";
 
 function App() {
     return (
@@ -20,27 +23,14 @@ function App() {
                 <main className="flex-grow">
                     <Routes>
                         <Route path="/" element={<Home />} />
-                        <Route path="/canada" element={<Canada />} />
-                        <Route path="/uk" element={<UK />} />
+                        <Route path="/:country" element={<CountryPage />} />
                         <Route
-                            path="/uk/city/:citySlug"
-                            element={<UKCityDetail />}
+                            path="/:country/:stateorprovince"
+                            element={<StateOrProvincePage />}
                         />
                         <Route
-                            path="/state/:stateSlug"
-                            element={<StateDetail />}
-                        />
-                        <Route
-                            path="/state/:stateSlug/:citySlug"
-                            element={<CityDetail />}
-                        />
-                        <Route
-                            path="/province/:provinceSlug"
-                            element={<ProvinceDetail />}
-                        />
-                        <Route
-                            path="/province/:provinceSlug/:citySlug"
-                            element={<ProvinceCity />}
+                            path="/:country/:stateorprovince/:city"
+                            element={<CityPage />}
                         />
                     </Routes>
                 </main>
