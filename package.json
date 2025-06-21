@@ -8,6 +8,9 @@
     },
     "scripts": {
         "start": "node backend/server.js",
+        "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
+        "dev:backend": "npm run dev --prefix backend",
+        "dev:frontend": "npm run dev --prefix frontend",
         "heroku-postbuild": "cd frontend && npm install && npm run build && cd .. && node backend/scripts/generate-sitemap.js"
     },
     "dependencies": {
@@ -23,6 +26,7 @@
         "serve": "^14.2.1"
     },
     "devDependencies": {
+        "concurrently": "^8.2.2",
         "@types/react": "^18.2.66",
         "@types/react-dom": "^18.2.22",
         "@vitejs/plugin-react": "^4.2.1",
